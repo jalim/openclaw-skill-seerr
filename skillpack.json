@@ -1,5 +1,6 @@
 {
   "files": {
+    "skills/seerr/openclaw-seerr-SKILL.md": "openclaw-seerr-SKILL.md",
     "skills/seerr/README.md": "README.md",
     "skills/seerr/scripts/lib.mjs": "scripts/lib.mjs",
     "skills/seerr/scripts/request-by-id.mjs": "scripts/request-by-id.mjs",
