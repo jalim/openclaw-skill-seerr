@@ -16,7 +16,14 @@ export async function seerr(path, options = {}) {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Seerr API ${res.status}: ${text}`);
+    let detail = text;
+    try {
+      const json = JSON.parse(text);
+      detail = json.message || json.error || text;
+    } catch {
+      // keep raw text
+    }
+    throw new Error(`Seerr API ${res.status}: ${detail}`);
   }
 
   return res.json();

@@ -8,7 +8,12 @@ const typeIdx = args.indexOf("--type");
 const type = typeIdx >= 0 ? args[typeIdx + 1] : null;
 
 if (!query) {
-  console.error("Usage: search.mjs \"title\"");
+  console.error("Usage: search.mjs \"title\" [--type movie|tv]");
+  process.exit(1);
+}
+
+if (type && type !== "movie" && type !== "tv") {
+  console.error("--type must be \"movie\" or \"tv\"");
   process.exit(1);
 }
 

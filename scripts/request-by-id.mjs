@@ -7,6 +7,12 @@ if (!id) {
   process.exit(1);
 }
 
+const numericId = Number(id);
+if (!Number.isInteger(numericId) || numericId < 1) {
+  console.error("id must be a positive integer");
+  process.exit(1);
+}
+
 const data = await seerr(`/request/${id}`);
 
 console.log(JSON.stringify(data, null, 2));
