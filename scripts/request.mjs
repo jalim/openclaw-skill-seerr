@@ -11,13 +11,24 @@ const seasonIdx = args.indexOf("--seasons");
 const seasons = seasonIdx >= 0 ? args[seasonIdx + 1] : null;
 
 if (!query) {
-  console.error("Usage: request.mjs \"title\"");
+  console.error("Usage: request.mjs \"title\" [--type movie|tv] [--seasons all|1,2,3]");
+  process.exit(1);
+}
+
+if (type && type !== "movie" && type !== "tv") {
+  console.error("--type must be \"movie\" or \"tv\"");
   process.exit(1);
 }
 
 const search = await seerr(`/search?query=${encodeURIComponent(query)}`);
 
-const result = search.results?.[0];
+let results = search.results || [];
+
+if (type) {
+  results = results.filter(r => r.mediaType === type);
+}
+
+const result = results[0];
 
 if (!result) {
   console.error("No results");
@@ -33,7 +44,12 @@ if (seasons && body.mediaType === "tv") {
   if (seasons === "all") {
     body.seasons = "all";
   } else {
-    body.seasons = seasons.split(",").map(Number);
+    const parsed = seasons.split(",").map(Number);
+    if (parsed.some(n => !Number.isInteger(n) || n < 1)) {
+      console.error("--seasons must be \"all\" or a comma-separated list of positive integers");
+      process.exit(1);
+    }
+    body.seasons = parsed;
   }
 }
 
