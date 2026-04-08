@@ -1,0 +1,14 @@
+{
+  "files": {
+    "skills/seerr/README.md": "README.md",
+    "skills/seerr/scripts/lib.mjs": "scripts/lib.mjs",
+    "skills/seerr/scripts/request-by-id.mjs": "scripts/request-by-id.mjs",
+    "skills/seerr/scripts/request.mjs": "scripts/request.mjs",
+    "skills/seerr/scripts/requests.mjs": "scripts/requests.mjs",
+    "skills/seerr/scripts/search.mjs": "scripts/search.mjs"
+  },
+  "directories": ["skills/seerr/scripts"],
+  "config": {
+    "seerr": {"enabled": true}
+  }
+}
