@@ -28,6 +28,12 @@ if (type) {
   results = results.filter(r => r.mediaType === type);
 }
 
+results.sort((a, b) => {
+  const dateA = a.releaseDate || a.firstAirDate || "";
+  const dateB = b.releaseDate || b.firstAirDate || "";
+  return dateB.localeCompare(dateA);
+});
+
 const result = results[0];
 
 if (!result) {
@@ -42,7 +48,7 @@ const body = {
 
 if (seasons && body.mediaType === "tv") {
   if (seasons === "all") {
-    body.seasons = "all";
+    // omit seasons key — Seerr requests all seasons by default
   } else {
     const parsed = seasons.split(",").map(Number);
     if (parsed.some(n => !Number.isInteger(n) || n < 1)) {
