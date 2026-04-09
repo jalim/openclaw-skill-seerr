@@ -2,7 +2,10 @@ import { seerr } from "./lib.mjs";
 
 const args = process.argv.slice(2);
 
-const query = args[0];
+const query = args[0] && !args[0].startsWith("--") ? args[0] : null;
+
+const idIdx = args.indexOf("--id");
+const id = idIdx >= 0 ? Number(args[idIdx + 1]) : null;
 
 const typeIdx = args.indexOf("--type");
 const type = typeIdx >= 0 ? args[typeIdx + 1] : null;
@@ -10,8 +13,19 @@ const type = typeIdx >= 0 ? args[typeIdx + 1] : null;
 const seasonIdx = args.indexOf("--seasons");
 const seasons = seasonIdx >= 0 ? args[seasonIdx + 1] : null;
 
-if (!query) {
+if (!query && !id) {
   console.error("Usage: request.mjs \"title\" [--type movie|tv] [--seasons all|1,2,3]");
+  console.error("       request.mjs --id <tmdb-id> --type movie|tv [--seasons all|1,2,3]");
+  process.exit(1);
+}
+
+if (id && !type) {
+  console.error("--type is required when using --id");
+  process.exit(1);
+}
+
+if (id && isNaN(id)) {
+  console.error("--id must be a number");
   process.exit(1);
 }
 
@@ -20,31 +34,37 @@ if (type && type !== "movie" && type !== "tv") {
   process.exit(1);
 }
 
-const search = await seerr(`/search?query=${encodeURIComponent(query)}`);
+let body;
 
-let results = search.results || [];
+if (id) {
+  body = { mediaId: id, mediaType: type };
+} else {
+  const search = await seerr(`/search?query=${encodeURIComponent(query)}`);
 
-if (type) {
-  results = results.filter(r => r.mediaType === type);
+  let results = search.results || [];
+
+  if (type) {
+    results = results.filter(r => r.mediaType === type);
+  }
+
+  results.sort((a, b) => {
+    const dateA = a.releaseDate || a.firstAirDate || "";
+    const dateB = b.releaseDate || b.firstAirDate || "";
+    return dateB.localeCompare(dateA);
+  });
+
+  const result = results[0];
+
+  if (!result) {
+    console.error("No results");
+    process.exit(1);
+  }
+
+  body = {
+    mediaId: result.id,
+    mediaType: type || result.mediaType
+  };
 }
-
-results.sort((a, b) => {
-  const dateA = a.releaseDate || a.firstAirDate || "";
-  const dateB = b.releaseDate || b.firstAirDate || "";
-  return dateB.localeCompare(dateA);
-});
-
-const result = results[0];
-
-if (!result) {
-  console.error("No results");
-  process.exit(1);
-}
-
-const body = {
-  mediaId: result.id,
-  mediaType: type || result.mediaType
-};
 
 if (seasons && body.mediaType === "tv") {
   if (seasons === "all") {
