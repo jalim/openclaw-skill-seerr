@@ -106,9 +106,9 @@ if (id) {
   };
 }
 
-if (seasons && body.mediaType === "tv") {
-  if (seasons === "all") {
-    // omit seasons key — Seerr requests all seasons by default
+if (body.mediaType === "tv") {
+  if (!seasons || seasons === "all") {
+    body.seasons = "all";
   } else {
     const parsed = seasons.split(",").map(Number);
     if (parsed.some(n => !Number.isInteger(n) || n < 1)) {
