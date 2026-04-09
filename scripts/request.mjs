@@ -13,10 +13,34 @@ const type = typeIdx >= 0 ? args[typeIdx + 1] : null;
 const seasonIdx = args.indexOf("--seasons");
 const seasons = seasonIdx >= 0 ? args[seasonIdx + 1] : null;
 
+const userIdx = args.indexOf("--user");
+const userName = userIdx >= 0 ? args[userIdx + 1] : null;
+
 if (!query && !id) {
-  console.error("Usage: request.mjs \"title\" [--type movie|tv] [--seasons all|1,2,3]");
-  console.error("       request.mjs --id <tmdb-id> --type movie|tv [--seasons all|1,2,3]");
+  console.error("Usage: request.mjs \"title\" [--type movie|tv] [--seasons all|1,2,3] [--user <name>]");
+  console.error("       request.mjs --id <tmdb-id> --type movie|tv [--seasons all|1,2,3] [--user <name>]");
   process.exit(1);
+}
+
+let userId = null;
+if (userName) {
+  const usersEnv = process.env.SEERR_USERS || "";
+  const userMap = Object.fromEntries(
+    usersEnv.split(",")
+      .filter(Boolean)
+      .map(entry => {
+        const colonIdx = entry.lastIndexOf(":");
+        const name = entry.slice(0, colonIdx).trim().toLowerCase();
+        const id = Number(entry.slice(colonIdx + 1).trim());
+        return [name, id];
+      })
+      .filter(([name, id]) => name && Number.isInteger(id) && id > 0)
+  );
+  userId = userMap[userName.toLowerCase()];
+  if (!userId) {
+    console.error(`Unknown user: "${userName}". Set SEERR_USERS=name:id,name:id to configure users.`);
+    process.exit(1);
+  }
 }
 
 if (id && !type) {
@@ -78,6 +102,8 @@ if (seasons && body.mediaType === "tv") {
     body.seasons = parsed;
   }
 }
+
+if (userId) body.userId = userId;
 
 const response = await seerr("/request", {
   method: "POST",

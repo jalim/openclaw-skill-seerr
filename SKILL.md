@@ -8,7 +8,8 @@ metadata:
         "bins": ["node"],
         "env": ["SEERR_URL", "SEERR_API_KEY"]
       },
-      "primaryEnv": "SEERR_API_KEY"
+      "primaryEnv": "SEERR_API_KEY",
+      "optionalEnv": ["SEERR_USERS"]
     }
   }
 ---
@@ -50,6 +51,9 @@ Use when the user says things like:
 - If results are clearly the same title (e.g. only quality variants), pick the best match without asking
 - Support TV season requests
 - Return request status after requesting
+- If the request is on behalf of someone else (e.g. "my wife wants X", "add Y for [name]"), pass `--user <name>` — the name must match a key configured in `SEERR_USERS`
+- If `--user` is given but `SEERR_USERS` is not configured or the name is not found, the script will exit with an error — inform the user they need to configure `SEERR_USERS`
+- If the user asks you to request something for themselves and SEERR_USERS is configured with a name for them, use `--user` for their account too so the request is attributed correctly
 
 ---
 
@@ -166,8 +170,37 @@ node {baseDir}/scripts/request-by-id.mjs 123
 
 ---
 
+# Multi-User Requests
+
+If `SEERR_USERS` is configured, you can attribute requests to a specific Seerr user using `--user`:
+
+```
+node {baseDir}/scripts/request.mjs "Bluey" --type tv --user wife
+```
+
+```
+node {baseDir}/scripts/request.mjs --id 83053 --type tv --user me
+```
+
+`SEERR_USERS` must be set as a comma-separated list of `name:id` pairs where the ID is the Seerr user ID:
+
+```
+SEERR_USERS=me:1,wife:2
+```
+
+To find a user's Seerr ID, visit the Seerr admin panel under Users.
+
+Detect who the request is for from conversational context:
+- "Request Bluey" → no `--user` (or use the current user's configured name)
+- "My wife wants Bluey" → `--user wife`
+- "Add Dune for me" → `--user me`
+- "Can you get Severance for [name]" → `--user [name]`
+
+---
+
 # Notes
 
 - This skill uses the Seerr API
 - Requires SEERR_URL and SEERR_API_KEY
 - Always search before requesting
+- `SEERR_USERS` is optional — omit it if you only have one user account
