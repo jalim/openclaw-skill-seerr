@@ -16,17 +16,18 @@ const seasons = seasonIdx >= 0 ? args[seasonIdx + 1] : null;
 const userIdx = args.indexOf("--user");
 const userName = userIdx >= 0 ? args[userIdx + 1] : null;
 
+const serverIdx = args.indexOf("--server");
+const serverName = serverIdx >= 0 ? args[serverIdx + 1] : null;
+
 if (!query && !id) {
-  console.error("Usage: request.mjs \"title\" [--type movie|tv] [--seasons all|1,2,3] [--user <name>]");
-  console.error("       request.mjs --id <tmdb-id> --type movie|tv [--seasons all|1,2,3] [--user <name>]");
+  console.error("Usage: request.mjs \"title\" [--type movie|tv] [--seasons all|1,2,3] [--user <name>] [--server <name>]");
+  console.error("       request.mjs --id <tmdb-id> --type movie|tv [--seasons all|1,2,3] [--user <name>] [--server <name>]");
   process.exit(1);
 }
 
-let userId = null;
-if (userName) {
-  const usersEnv = process.env.SEERR_USERS || "";
-  const userMap = Object.fromEntries(
-    usersEnv.split(",")
+function parseNameIdMap(envValue) {
+  return Object.fromEntries(
+    (envValue || "").split(",")
       .filter(Boolean)
       .map(entry => {
         const colonIdx = entry.lastIndexOf(":");
@@ -36,9 +37,24 @@ if (userName) {
       })
       .filter(([name, id]) => name && Number.isInteger(id) && id > 0)
   );
+}
+
+let userId = null;
+if (userName) {
+  const userMap = parseNameIdMap(process.env.SEERR_USERS);
   userId = userMap[userName.toLowerCase()];
   if (!userId) {
     console.error(`Unknown user: "${userName}". Set SEERR_USERS=name:id,name:id to configure users.`);
+    process.exit(1);
+  }
+}
+
+let serverId = null;
+if (serverName) {
+  const serverMap = parseNameIdMap(process.env.SEERR_SERVERS);
+  serverId = serverMap[serverName.toLowerCase()];
+  if (!serverId) {
+    console.error(`Unknown server: "${serverName}". Set SEERR_SERVERS=name:id,name:id to configure servers.`);
     process.exit(1);
   }
 }
@@ -104,6 +120,7 @@ if (seasons && body.mediaType === "tv") {
 }
 
 if (userId) body.userId = userId;
+if (serverId) body.serverId = serverId;
 
 const response = await seerr("/request", {
   method: "POST",
